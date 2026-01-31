@@ -1,0 +1,353 @@
+{
+  "name": "Data analysis graph generator",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1DISmHA79jl6jx0pCn-H9MUYzUAO3F2lgcpV-aEqxB0U",
+          "mode": "list",
+          "cachedResultName": "prosperty.csv",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DISmHA79jl6jx0pCn-H9MUYzUAO3F2lgcpV-aEqxB0U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 158265464,
+          "mode": "list",
+          "cachedResultName": "students_50x10",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DISmHA79jl6jx0pCn-H9MUYzUAO3F2lgcpV-aEqxB0U/edit#gid=158265464"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        80,
+        288
+      ],
+      "id": "5d35f145-859b-4e5c-a846-298a9cf69cb8",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "i5f6odxjs72UKJaE",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst cleanedItems = items.map((item) => {\n  item.json.Name = item.json.Name || 0;\n  item.json.Year = item.json.Year || 0;\n  item.json.Scholarship = item.json.Scholarship || 0;\n  return item;\n});\nreturn cleanedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        288
+      ],
+      "id": "907767e7-d370-463b-ae66-9964c09867fc",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const students = $input.all().map((item) => item.json);\n\nconst departmentVsStudentCount = students.reduce((acc, student) => {\n  acc[student.Department] = (acc[student.Department] || 0) + 1;\n  return acc;\n}, {});\n\nconst scholarshipVsCount = students.reduce((acc, student) => {\n  const scholarshipKey = student.Scholarship\n    ? \"With Scholarship\"\n    : \"Without Scholarship\";\n  acc[scholarshipKey] = (acc[scholarshipKey] || 0) + 1;\n  return acc;\n}, {});\n\nconst averageGPA =\n  students.reduce((acc, student) => acc + student.GPA, 0) / students.length;\nconst averageAge =\n  students.reduce((acc, student) => acc + student.Age, 0) / students.length;\nconst averageAttendance =\n  students.reduce((acc, student) => acc + student[\"Attendance%\"], 0) /\n  students.length;\n\nconst maleCount = students.filter(\n  (student) => student.Gender === \"Male\",\n).length;\nconst femaleCount = students.filter(\n  (student) => student.Gender === \"Female\",\n).length;\n\nreturn {\n  json: {\n    departmentVsStudentCount,\n    scholarshipVsCount,\n    averageGPA,\n    averageAge,\n    averageAttendance,\n    maleCount,\n    femaleCount,\n  },\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        288
+      ],
+      "id": "3f16629e-86f4-4743-bc40-eb0848d744aa",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quickchart.io/chart/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"width\": 500,\n  \"height\": 300,\n  \"version\": \"4\",\n  \"chart\": {\n    \"type\": \"bar\",\n    \"data\": {\n      \"labels\": [\"Science\", \"Commerce\", \"Engineering\", \"Arts\"],\n      \"datasets\": [\n        {\n          \"label\": \"Student Count by Department\",\n          \"data\": [12, 12, 13, 13],\n          \"backgroundColor\": [\n            \"rgba(255, 99, 132, 0.8)\",\n            \"rgba(54, 162, 235, 0.8)\",\n            \"rgba(255, 206, 86, 0.8)\",\n            \"rgba(75, 192, 192, 0.8)\"\n          ],\n          \"borderRadius\": 5,\n          \"barPercentage\": 0.6\n        }\n      ]\n    },\n    \"options\": {\n      \"plugins\": {\n        \"legend\": {\n          \"display\": false\n        },\n        \"title\": {\n          \"display\": true,\n          \"text\": \"Student Count by Department\",\n          \"font\": {\n            \"size\": 18,\n            \"weight\": \"bold\"\n          }\n        }\n      },\n      \"layout\": {\n        \"padding\": {\n          \"top\": 20,\n          \"bottom\": 20,\n          \"left\": 20,\n          \"right\": 20\n        }\n      },\n      \"scales\": {\n        \"y\": {\n          \"beginAtZero\": true,\n          \"ticks\": {\n            \"stepSize\": 1\n          },\n          \"grid\": {\n            \"display\": false\n          }\n        },\n        \"x\": {\n          \"grid\": {\n            \"display\": false\n          }\n        }\n      }\n    }\n  },\n  \"backgroundColor\": \"rgba(255, 255, 255, 1)\",\n  \"borderColor\": \"rgba(0,0,0,0.1)\",\n  \"borderWidth\": 1,\n  \"borderRadius\": 15,\n  \"shadow\": true\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        816,
+        192
+      ],
+      "id": "6fbb1b3d-82f5-47ed-9c25-b491e72ed58e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert Data Analyst AI Agent. Your task is to analyze KPI data and generate an intelligent summary. Write as if reporting to a school leadership board.\n\n------ DATA INPUT ------\nDepartment vs Student Count:\n{{ $json.departmentVsStudentCount }}\n\nAverage Attendance:\n{{ $json.averageAttendance }}\n\nScholarship vs Count:\n{{ $json.scholarshipVsCount }}\n\n------ ANALYSIS REQUIREMENTS ------\nUsing the KPI data above, produce a concise insight report containing:\n\n1️⃣ Overall student performance summary  \n2️⃣ Department-wise strengths or weaknesses  \n3️⃣ Attendance interpretation (good, average, or poor)  \n4️⃣ Scholarship observations based on volume comparison  \n5️⃣ Highlight top trends or risks using the given metrics   \n\n------ OUTPUT FORMAT ------\nWrite in 3–5 sentences,\nProfessional, insightful, and actionable.\nNo bullet points.\nNo repetition of raw data.\nProvide clear meaning behind the numbers.\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        752,
+        -208
+      ],
+      "id": "34d21591-2eb3-40ae-bea6-4c871df5deb4",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "numberInputs": 10
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1104,
+        160
+      ],
+      "id": "0bed090a-006a-411a-81c8-f926969e2300",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quickchart.io/chart/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"width\": 500,\n  \"height\": 300,\n  \"version\": \"4\",\n  \"chart\": {\n    \"type\": \"bar\",\n    \"data\": {\n      \"labels\": [\"Scholarship\", \"Non-Scholarship\"],\n      \"datasets\": [\n        {\n          \"label\": \"Scholarship Count\",\n          \"data\": [22, 28],\n          \"backgroundColor\": [\n            \"rgba(153, 102, 255, 0.8)\",\n            \"rgba(255, 159, 64, 0.8)\"\n          ],\n          \"borderRadius\": 5,\n          \"barPercentage\": 0.6\n        }\n      ]\n    },\n    \"options\": {\n      \"plugins\": {\n        \"legend\": {\n          \"display\": false\n        },\n        \"title\": {\n          \"display\": true,\n          \"text\": \"Scholarship Vs Student Count\",\n          \"font\": {\n            \"size\": 18,\n            \"weight\": \"bold\"\n          }\n        }\n      },\n      \"layout\": {\n        \"padding\": {\n          \"top\": 20,\n          \"bottom\": 20,\n          \"left\": 20,\n          \"right\": 20\n        }\n      },\n      \"scales\": {\n        \"y\": {\n          \"beginAtZero\": true,\n          \"ticks\": {\n            \"stepSize\": 5\n          },\n          \"grid\": {\n            \"display\": false\n          }\n        },\n        \"x\": {\n          \"grid\": {\n            \"display\": false\n          }\n        }\n      }\n    }\n  },\n  \"backgroundColor\": \"rgba(255, 255, 255, 1)\",\n  \"borderColor\": \"rgba(0,0,0,0.1)\",\n  \"borderWidth\": 1,\n  \"borderRadius\": 15,\n  \"shadow\": true\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        816,
+        384
+      ],
+      "id": "d5ad2c52-920c-43ad-a25c-83fb4dec3636",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map((item) => item.json);\nlet report = \"<h1>Report</h1>\";\n\nitems.forEach((item, index) => {\n  report += `<h2>Chart ${index + 1}</h2>`;\n  report += `<p>${item.text}</p>`;\n  report += `<img src=\"${item.url}\" alt=\"Chart ${index + 1}\">`;\n});\n\nreturn [{ json: { report } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        288
+      ],
+      "id": "238f7641-cbb0-40fa-bcab-73251b113a07",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "sendTo": "sauravkumavat331@gmail.com",
+        "subject": "Summary report",
+        "message": "={{ $json.report }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1552,
+        288
+      ],
+      "id": "c55c8897-abf7-414b-afee-e9e1a9e0afe5",
+      "name": "Send a message",
+      "webhookId": "ee835ffd-3351-4332-9b54-3c68da355302",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QgaRsOVeMT5S7HcE",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "groq/compound",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        824,
+        16
+      ],
+      "id": "325c6725-ccf9-4cc5-9db4-0a6dbf3508ea",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "ENZUMpc5OJ2ZvS2B",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quickchart.io/chart/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"width\": 350,\n  \"height\": 350,\n  \"backgroundColor\": \"rgba(255,255,255,1)\",\n  \"chart\": {\n    \"type\": \"pie\",\n    \"data\": {\n      \"labels\": [\"Scholarship\", \"Non-Scholarship\"],\n      \"datasets\": [\n        {\n          \"data\": [22, 28],\n          \"backgroundColor\": [\n            \"rgba(153, 102, 255, 0.8)\",\n            \"rgba(255, 159, 64, 0.8)\"\n          ]\n        }\n      ]\n    },\n    \"options\": {\n      \"plugins\": {\n        \"title\": {\n          \"display\": true,\n          \"text\": \"Scholarship Distribution\"\n        }\n      }\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        816,
+        576
+      ],
+      "id": "23d7d528-ef18-425c-a027-56a989c6641d",
+      "name": "HTTP Request2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "330e4806-e89e-4b82-a6f7-71873116eff1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bd6cf88e4ca7160baa803154569b7e767affc9da32f7d8e2f9e32fd92df721de"
+  },
+  "id": "fnFSgc4C9T9v7ExB",
+  "tags": []
+}
